@@ -1,0 +1,19 @@
+diff --git a/components/quick-finder.tsx b/components/quick-finder.tsx
+--- a/components/quick-finder.tsx
++++ b/components/quick-finder.tsx
+@@
+-  const [date, setDate] = React.useState<string>(new Date().toISOString().slice(0,10))
+-  const today = new Date(); const maxDate = new Date(today.getTime() + 60*24*60*60*1000)
++  const today = new Date();
++  const defaultDate = new Date(today.getTime() + 14*24*60*60*1000)
++  const [date, setDate] = React.useState<string>(defaultDate.toISOString().slice(0,10))
++  const maxDate = new Date(today.getTime() + 60*24*60*60*1000)
+
+diff --git a/app/plan/page.tsx b/app/plan/page.tsx
+--- a/app/plan/page.tsx
++++ b/app/plan/page.tsx
+@@
+-  const [date, setDate] = React.useState<string>(new Date().toISOString().slice(0,10))
++  const today = new Date();
++  const defaultDate = new Date(today.getTime() + 14*24*60*60*1000)
++  const [date, setDate] = React.useState<string>(defaultDate.toISOString().slice(0,10))

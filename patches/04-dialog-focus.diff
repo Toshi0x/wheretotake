@@ -1,0 +1,11 @@
+diff --git a/components/quick-finder.tsx b/components/quick-finder.tsx
+--- a/components/quick-finder.tsx
++++ b/components/quick-finder.tsx
+@@
+   const [its, setIts] = React.useState<Itinerary[]|null>(null)
+   const maxDate = new Date(today.getTime() + 60*24*60*60*1000)
+   const triggerRef = React.useRef<HTMLButtonElement>(null)
+@@
+   <Button ref={triggerRef} type="submit" className="grow md:grow-0">Deal me 3</Button>
+@@
+   <Dialog open={open} onOpenChange={(o)=>{ setOpen(o); if (!o) triggerRef.current?.focus() }}>

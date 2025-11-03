@@ -1,0 +1,15 @@
+diff --git a/app/london/page.tsx b/app/london/page.tsx
+--- a/app/london/page.tsx
++++ b/app/london/page.tsx
+@@
+     const min = initial.min ? Number(initial.min) : undefined
+     const max = initial.max ? Number(initial.max) : undefined
+-    const budget = (min==null && max==null) || (
+-      Math.max(min ?? -Infinity, p.budget_min ?? (p.price_level===1?12:(p.price_level===2?25:45))) <=
+-      Math.min(max ?? Infinity, p.budget_max ?? (p.price_level===1?25:(p.price_level===2?45:75)))
+-    )
++    const [bandMin, bandMax] = priceBandFromLevel(p.price_level)
++    const budget = (min==null && max==null) || (
++      Math.max(min ?? -Infinity, p.budget_min ?? bandMin) <=
++      Math.min(max ?? Infinity, p.budget_max ?? bandMax)
++    )

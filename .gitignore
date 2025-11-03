@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+.vercel/
+out/
+.turbo/
+
+# tests & reports
+coverage/
+reports/lighthouse/
+
+# logs
+*.log
+
+# env
+.env*
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+

@@ -1,0 +1,21 @@
+diff --git a/app/place/[slug]/page.tsx b/app/place/[slug]/page.tsx
+--- a/app/place/[slug]/page.tsx
++++ b/app/place/[slug]/page.tsx
+@@
+   const avg = baseReviews.length ? (baseReviews.reduce((s, r) => s + r.rating, 0) / baseReviews.length) : undefined
+   const ld: any = {
+     '@context': 'https://schema.org',
+     '@type': 'Place',
+     name: place.name,
+     address: place.address,
+     url: `https://example.com/place/${place.slug}`,
+   }
+   if (avg) {
+     ld.aggregateRating = {
+       '@type': 'AggregateRating',
+       ratingValue: avg.toFixed(1),
+       reviewCount: baseReviews.length
+     }
+   }
+@@
+   <script type="application/ld+json" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />

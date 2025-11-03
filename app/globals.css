@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 213 29% 6%;
+  --card: 216 27% 9%;
+  --muted: 215 26% 12%;
+  --text: 210 45% 93%;
+  --text-dim: 213 26% 70%;
+  --accent: 158 87% 60%;
+  --accent-2: 209 100% 67%;
+  --shadow: 0 16px 48px rgba(0,0,0,.45);
+  --radius: 18px;
+  --ring: 0 0 0 3px rgba(62,243,182,.28);
+}
+
+html, body {
+  background: hsl(var(--bg));
+  color: hsl(var(--text));
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(62,243,182,.28);
+}
+
+.container-page {
+  @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.card {
+  @apply glass rounded-2xl shadow-glow border border-white/5;
+}
+
+/* Typography */
+h1,h2,h3 { @apply tracking-tight; }
+

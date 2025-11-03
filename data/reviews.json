@@ -1,0 +1,38 @@
+[
+  {
+    "id": "r1",
+    "placeId": "bar-lowkey-soho",
+    "rating": 5,
+    "title": "Perfect low-key first stop",
+    "body": "Great music at a gentle volume and the staff helped pick a drink.",
+    "author": "Sam",
+    "createdAt": "2024-08-12T19:00:00.000Z"
+  },
+  {
+    "id": "r2",
+    "placeId": "restaurant-izakaya-shoreditch",
+    "rating": 4,
+    "title": "Book a few days ahead",
+    "body": "Counter seats are best—smoky yakitori and fun sake flight.",
+    "author": "Leah",
+    "createdAt": "2024-07-10T20:00:00.000Z"
+  },
+  {
+    "id": "r3",
+    "placeId": "canal-walk-gelato",
+    "rating": 5,
+    "title": "Peaceful and cute",
+    "body": "We walked at sunset and grabbed gelato—simple and lovely.",
+    "author": "M",
+    "createdAt": "2024-06-02T18:00:00.000Z"
+  },
+  {
+    "id": "r4",
+    "placeId": "soho-dessert-bar",
+    "rating": 4,
+    "title": "Sweet finish",
+    "body": "Share the plated dessert, portions are generous.",
+    "createdAt": "2024-09-21T21:30:00.000Z"
+  }
+]
+

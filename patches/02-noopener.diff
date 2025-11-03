@@ -1,0 +1,10 @@
+diff --git a/components/place-card.tsx b/components/place-card.tsx
+--- a/components/place-card.tsx
++++ b/components/place-card.tsx
+@@
+-<a target="_blank" rel="noreferrer" href={place.booking_url}>Book</a>
++<a target="_blank" rel="noopener noreferrer" href={place.booking_url}>Book</a>
+@@
+-<a target="_blank" rel="noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.address ?? place.name + ' ' + place.area)}`}>Route</a>
++<a target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.address ?? place.name + ' ' + place.area)}`}>Route</a>
+

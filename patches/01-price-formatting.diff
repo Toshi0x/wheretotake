@@ -1,0 +1,23 @@
+diff --git a/lib/utils.ts b/lib/utils.ts
+index abc..def 100644
+--- a/lib/utils.ts
++++ b/lib/utils.ts
+@@
+-export function fmtPriceRange(r?: [number, number]) {
+-  if (!r) return '����'
+-  const [a,b] = r
+-  return `��${a}�?"��${b}`
+-}
++export function fmtPriceRange(r?: [number, number]) {
++  if (!r) return '£?'
++  const [a, b] = r
++  return `£${a}-${b}`
++}
+
+diff --git a/components/itinerary-card.tsx b/components/itinerary-card.tsx
+--- a/components/itinerary-card.tsx
++++ b/components/itinerary-card.tsx
+@@
+-<div className="font-semibold">~{it.totalMinutes} mins �� Est {`��${it.perPersonEstimate[0]}�?"��${it.perPersonEstimate[1]}`} pp</div>
++<div className="font-semibold">~{it.totalMinutes} mins · Est {`£${it.perPersonEstimate[0]}-£${it.perPersonEstimate[1]}`} pp</div>
+
