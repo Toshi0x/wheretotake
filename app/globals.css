@@ -2,37 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: 213 29% 6%;
-  --card: 216 27% 9%;
-  --muted: 215 26% 12%;
-  --text: 210 45% 93%;
-  --text-dim: 213 26% 70%;
-  --accent: 158 87% 60%;
-  --accent-2: 209 100% 67%;
+:root { /* DARK — Midnight Mint (default) */
+  --bg:#0B0F14; --card:#11161D; --muted:#151B24;
+  --text:#E7EDF5; --text-dim:#9FB0C8;
+  --accent:#3EF3B6; --accent-2:#5AB0FF;
+  --success:#36D399; --warning:#F5B84E; --danger:#FF5A7A;
+  --ring:0 0 0 3px rgba(62,243,182,.28);
+  --border: rgba(0,0,0,.33);
   --shadow: 0 16px 48px rgba(0,0,0,.45);
   --radius: 18px;
-  --ring: 0 0 0 3px rgba(62,243,182,.28);
 }
 
-html, body {
-  background: hsl(var(--bg));
-  color: hsl(var(--text));
+.light { /* LIGHT — Pearl & Pistachio */
+  --bg:#FAFBFD; --card:#FFFFFF; --muted:#F2F4F7;
+  --text:#0D1320; --text-dim:#4B5B73;
+  --accent:#0BB07B; --accent-2:#165DFF;
+  --success:#15803D; --warning:#B7791F; --danger:#C81E3A;
+  --ring:0 0 0 3px rgba(22,93,255,.18);
+  --border: rgba(15,23,42,.10);
 }
 
-.focus-ring:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(62,243,182,.28);
-}
+html, body { background: var(--bg); color: var(--text); }
+
+/* Utility tokens */
+.glass { background: color-mix(in srgb, var(--card) 92%, transparent);
+         backdrop-filter: blur(8px) saturate(1.08);
+         border: 1px solid var(--border); border-radius: 16px; }
+
+.focus-ring:focus-visible { box-shadow: var(--ring); outline: none; }
 
 .container-page {
   @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-.card {
-  @apply glass rounded-2xl shadow-glow border border-white/5;
-}
+.card { @apply glass rounded-2xl border; border-color: var(--border); }
 
 /* Typography */
 h1,h2,h3 { @apply tracking-tight; }
 
+/* Overrides and additions for theme tokens and helpers */
+:root { /* DARK — Midnight Mint */
+  --bg:#0B0F14; --card:#11161D; --muted:#151B24;
+  --text:#E7EDF5; --text-dim:#9FB0C8;
+  --accent:#3EF3B6; --accent-2:#5AB0FF;
+  --on-accent:#0B0F14;                /* text on CTA mint — constant */
+  --border: rgba(0,0,0,.33);
+  --shadow: 0 12px 30px rgba(0,0,0,.35);
+  --overlay-soft: color-mix(in srgb, var(--text) 28%, transparent);
+  --overlay-strong: color-mix(in srgb, var(--text) 55%, transparent);
+  --ring: 0 0 0 3px rgba(62,243,182,.28);
+}
+
+.light { /* LIGHT — Pearl & Pistachio */
+  --bg:#FAFBFD; --card:#FFFFFF; --muted:#F2F4F7;
+  --text:#0D1320; --text-dim:#4B5B73;
+  --accent:#0BB07B; --accent-2:#165DFF;
+  --on-accent:#0B0F14;               /* stays dark for contrast */
+  --border: rgba(15,23,42,.10);
+  --shadow: 0 10px 22px rgba(2,6,23,.10);
+  --overlay-soft: rgba(0,0,0,.22);
+  --overlay-strong: rgba(0,0,0,.40);
+  --ring: 0 0 0 3px rgba(22,93,255,.18);
+}
+
+.overlay-gradient{
+  background: linear-gradient(180deg,
+    transparent 30%,
+    var(--overlay-soft) 70%,
+    var(--overlay-strong) 100%);
+}
+
+/* Ensure glass and card use theme-aware shadow */
+.glass { box-shadow: var(--shadow); background: color-mix(in srgb, var(--card) 94%, transparent); }
+.card { box-shadow: var(--shadow); background: var(--card); border-color: var(--border); }

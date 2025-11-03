@@ -11,35 +11,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: 'hsl(var(--bg))',
-        card: 'hsl(var(--card))',
-        muted: 'hsl(var(--muted))',
-        text: 'hsl(var(--text))',
-        'text-dim': 'hsl(var(--text-dim))',
-        accent: 'hsl(var(--accent))',
-        'accent-2': 'hsl(var(--accent-2))',
+        bg: 'var(--bg)',
+        card: 'var(--card)',
+        muted: 'var(--muted)',
+        text: 'var(--text)',
+        textDim: 'var(--text-dim)',
+        accent: 'var(--accent)',
+        accent2: 'var(--accent-2)',
+        onAccent: 'var(--on-accent)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        danger: 'var(--danger)',
+        border: 'var(--border)'
       },
       borderRadius: {
         xl: 'var(--radius)',
         '2xl': 'calc(var(--radius) + 6px)'
       },
-      boxShadow: {
-        glow: 'var(--shadow)'
-      },
-      ringOffsetWidth: {
-        DEFAULT: 'var(--ring)'
-      }
+      boxShadow: { focus: 'var(--ring)', soft: 'var(--shadow)' },
+      ringOffsetWidth: { DEFAULT: 'var(--ring)' }
     }
   },
   plugins: [require('@tailwindcss/typography'), plugin(({ addUtilities }) => {
     addUtilities({
       '.glass': {
-        backgroundColor: 'rgba(17,22,29,0.6)',
-        backdropFilter: 'blur(8px) saturate(1.1)'
+        backgroundColor: 'color-mix(in srgb, var(--card) 92%, transparent)',
+        backdropFilter: 'blur(8px) saturate(1.08)',
+        border: '1px solid var(--border)',
+        borderRadius: '16px'
       }
     })
   })]
 }
 
 export default config
-

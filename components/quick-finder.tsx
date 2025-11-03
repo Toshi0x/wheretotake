@@ -3,7 +3,6 @@ import * as React from 'react'
 import { Input } from './ui/input'
 import { Select } from './ui/select'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from './ui/dialog'
 import { plan, type Itinerary } from '@/lib/planner'
 import { Vibe } from '@/lib/types'
@@ -24,9 +23,8 @@ const vibesList: { key: Vibe; label: string }[] = [
 
 export default function QuickFinder() {
   const { notify } = useToast()
-  const [min, setMin] = React.useState<string>('')
   const [max, setMax] = React.useState<string>('')
-  const today = new Date();
+  const today = new Date()
   const defaultDate = new Date(today.getTime() + 14*24*60*60*1000)
   const [date, setDate] = React.useState<string>(defaultDate.toISOString().slice(0,10))
   const [area, setArea] = React.useState('')
@@ -41,11 +39,10 @@ export default function QuickFinder() {
     e.preventDefault()
     const input = {
       dateISO: date,
-      budgetMin: min ? Number(min) : undefined,
       budgetMax: max ? Number(max) : undefined,
       area: area || undefined,
       vibes,
-      when
+      when,
     }
     const out = await plan(input)
     setIts(out)
@@ -66,37 +63,55 @@ export default function QuickFinder() {
   }
 
   return (
-    <div className="card p-5">
+    <div className="card p-5" data-testid="quick-finder">
       <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-3 gap-3" aria-label="Quick finder form">
-        <label className="text-sm">Budget Min (£)
-          <Input inputMode="numeric" value={min} onChange={e=>setMin(e.target.value)} placeholder="Any" aria-label="Budget minimum" />
+        <fieldset className="text-sm md:col-span-3">
+          <legend className="mb-2 block">Budget (£, per person)</legend>
+          <div className="grid grid-cols-1 gap-3" aria-describedby="budgetHelp">
+            <label className="text-sm" htmlFor="budget">Budget
+              <Input id="budget" data-testid="budget" inputMode="numeric" value={max} onChange={e=>setMax(e.target.value)} placeholder="Any" aria-label="Budget" />
+            </label>
+          </div>
+          <small id="budgetHelp" className="mt-1 block text-textDim">We'll use per-person price.</small>
+        </fieldset>
+        <label className="text-sm" htmlFor="date">Date
+          <Input id="date" type="date" min={today.toISOString().slice(0,10)} max={maxDate.toISOString().slice(0,10)} value={date} onChange={e=>setDate(e.target.value)} aria-label="Date" />
         </label>
-        <label className="text-sm">Budget Max (£)
-          <Input inputMode="numeric" value={max} onChange={e=>setMax(e.target.value)} placeholder="Any" aria-label="Budget maximum" />
+        <label className="text-sm" htmlFor="area">Area / Postcode
+          <Input id="area" value={area} onChange={(e)=>setArea(e.target.value)} placeholder="e.g., Soho" aria-label="Area" />
         </label>
-        <label className="text-sm">Date
-          <Input type="date" min={today.toISOString().slice(0,10)} max={maxDate.toISOString().slice(0,10)} value={date} onChange={e=>setDate(e.target.value)} aria-label="Date" />
-        </label>
-        <label className="text-sm">Area / Postcode
-          <Input value={area} onChange={(e)=>setArea(e.target.value)} placeholder="e.g., Soho" aria-label="Area" />
-        </label>
-        <label className="text-sm">When
-          <Select value={when} onChange={(e)=>setWhen(e.target.value as any)} aria-label="When">
+        <div className="text-sm">
+          <label htmlFor="when">When</label>
+          <Select id="when" value={when} onChange={(e)=>setWhen(e.target.value as any)} aria-label="When">
             <option value="tonight">Tonight</option>
             <option value="weekend">Weekend</option>
             <option value="daytime">Daytime</option>
           </Select>
-        </label>
-        <div className="text-sm">
-          Vibes
-          <div className="mt-2 flex flex-wrap gap-2">
+          {(when === 'tonight') && (
+            <small className="mt-1 block text-textDim">We'll favour walk-in friendly spots.</small>
+          )}
+          {when !== 'tonight' && (new Date(date) >= new Date(today.getTime() + 14*24*60*60*1000)) && (
+            <small className="mt-1 block text-textDim">Includes places requiring booking up to 2 weeks.</small>
+          )}
+        </div>
+        <fieldset className="text-sm md:col-span-3">
+          <legend id="vibes-label" className="mb-2 block">Vibes</legend>
+          <div className="mt-0 flex flex-wrap gap-2" aria-labelledby="vibes-label">
             {vibesList.map(v => (
-              <button key={v.key} type="button" onClick={()=>toggle(v.key)} aria-pressed={vibes.includes(v.key)} className={`rounded-full px-3 py-1 text-sm focus-ring ${vibes.includes(v.key) ? 'bg-[hsl(var(--accent))] text-black' : 'bg-white/10'}`}>
+              <button
+                key={v.key}
+                type="button"
+                data-testid={`vibe-chip-${v.key}`}
+                onClick={()=>toggle(v.key)}
+                onKeyDown={(e)=>{ if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(v.key) } }}
+                aria-pressed={vibes.includes(v.key)}
+                className={`rounded-full px-3 py-1 text-sm focus-ring ${vibes.includes(v.key) ? 'bg-accent/16 text-accent' : 'bg-muted text-textDim'}`}
+              >
                 {v.label}
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
         <div className="md:col-span-3 flex gap-3 pt-2">
           <Button ref={triggerRef} type="submit" className="grow md:grow-0">Deal me 3</Button>
           <Button variant="secondary" asChild><Link href="/london">Browse London</Link></Button>
@@ -117,8 +132,8 @@ export default function QuickFinder() {
         <DialogTrigger asChild>
           <span className="sr-only" />
         </DialogTrigger>
-        <DialogContent aria-labelledby="it-title">
-          <DialogTitle id="it-title" className="mb-3">Your mini-plan</DialogTitle>
+        <DialogContent role="dialog" aria-modal="true" aria-labelledby="itinerary-title">
+          <DialogTitle id="itinerary-title" className="mb-3">Your mini-plan</DialogTitle>
           {its?.map((it,idx)=>(<div key={idx} className="mb-3"><ItineraryCard it={it} /></div>))}
           <div className="flex gap-2 mt-2">
             <Button onClick={copyPlan}>Copy plan</Button>
@@ -129,4 +144,3 @@ export default function QuickFinder() {
     </div>
   )
 }
-

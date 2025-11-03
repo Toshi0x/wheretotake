@@ -22,6 +22,14 @@ export interface Place {
   instagram_url?: string
   tiktok_url?: string
   photo_url?: string
+  featured?: {
+    active: boolean
+    rank?: number
+    label?: string
+    sponsored?: boolean
+    from?: string
+    to?: string
+  }
 }
 
 export interface Review {
@@ -33,4 +41,3 @@ export interface Review {
   author?: string
   createdAt: string // ISO
 }
-

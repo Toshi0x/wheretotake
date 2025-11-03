@@ -10,7 +10,7 @@ export default function ItineraryCard({ it }: { it: Itinerary }) {
       </div>
       <ol className="space-y-3">
         {it.steps.map((s, idx) => (
-          <li key={idx} className="flex items-start gap-3">
+          <li key={idx} data-testid="itinerary-step" className="flex items-start gap-3">
             <div className="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--accent))] text-black font-semibold">{idx+1}</div>
             <div>
               <div className="font-medium"><Link href={`/place/${s.place.slug}`} className="hover:underline">{s.place.name}</Link> <span className="text-white/60">· {s.place.area}</span></div>
@@ -22,4 +22,3 @@ export default function ItineraryCard({ it }: { it: Itinerary }) {
     </Card>
   )
 }
-

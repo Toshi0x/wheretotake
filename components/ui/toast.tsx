@@ -18,10 +18,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div className="fixed bottom-4 right-4 space-y-2">
         {toasts.map(t => (
-          <div key={t.id} className={cn('rounded-xl bg-[hsl(var(--card))] border border-white/10 px-4 py-3 shadow-glow')}
+          <div key={t.id} className={cn('rounded-xl bg-card border border-border px-4 py-3 shadow-soft')}
             role="status" aria-live="polite">
             <div className="text-sm font-semibold">{t.title}</div>
-            {t.description && <div className="text-xs text-white/70">{t.description}</div>}
+            {t.description && <div className="text-xs text-textDim">{t.description}</div>}
           </div>
         ))}
       </div>
@@ -34,4 +34,3 @@ export function useToast() {
   if (!ctx) throw new Error('useToast must be used within ToastProvider')
   return ctx
 }
-

@@ -1,4 +1,4 @@
-﻿import QuickFinder from '@/components/quick-finder'
+import QuickFinder from '@/components/quick-finder'
 import PlaceCard from '@/components/place-card'
 import FeaturedRow from '@/components/FeaturedRow'
 // Collections removed; reviews is primary
@@ -18,7 +18,7 @@ export default async function HomePage() {
       
       <section className="text-center space-y-4">
         <h1 className="text-4xl md:text-6xl font-extrabold">Three options in 30 seconds.</h1>
-        <p className="text-textDim max-w-2xl mx-auto">Pick your vibe, set your budget, and go.</p>
+        <p className="text-white/70 max-w-2xl mx-auto">Pick your vibe, set your budget, and get a mini-plan with realistic travel times. London-first.</p>
       </section>
       {featured.length > 0 && (
         <section className="space-y-4" aria-labelledby="featured-heading">
@@ -26,17 +26,17 @@ export default async function HomePage() {
         </section>
       )}
       <QuickFinder />
-      <p className="text-sm text-textDim text-center">Price is per person. We factor wait time and travel so plans actually work.</p>
+      <p className="text-sm text-white/60 text-center">Price is per person. We factor lead-time and travel so plans actually work.</p>
 
       <section>
-        <div className="text-textDim text-sm mb-2">Why trust it</div>
+        <div className="text-white/60 text-sm mb-2">Why trust it</div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <div className="card p-4 text-center font-medium">Curated by Londoners</div>
           <div className="card p-4 text-center font-medium">No filler listings</div>
           <div className="card p-4 text-center font-medium">Fast routes</div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 hidden">
-          {["10k+ dates planned","4.7★ avg","Fast routes","Local picks"].map((t,i)=>(
+          {["10k+ dates planned","4.7? avg","Fast routes","Local picks"].map((t,i)=>(
             <div key={i} className="card p-4 text-center font-medium">{t}</div>
           ))}
         </div>
@@ -58,7 +58,7 @@ export default async function HomePage() {
 
       <section className="space-y-3">
         <h2 className="text-2xl font-bold">Get the Friday Fix</h2>
-        <p className="text-textDim">One smart date idea, weekly. No spam.</p>
+        <p className="text-white/70">One smart date idea, weekly. No spam.</p>
         <EmailCapture />
       </section>
     </div>

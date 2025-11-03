@@ -10,17 +10,17 @@ import { ToastProvider } from '@/components/ui/toast'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Where To Take — Three date options in 30 seconds',
+  title: 'Dealme3 — Three options in 30 seconds',
   description: 'Pick your vibe, set your budget, and get a mini-plan with realistic travel times. London-first.',
   openGraph: {
-    title: 'Where To Take',
-    description: 'Three date options in 30 seconds',
+    title: 'Dealme3',
+    description: 'Three options in 30 seconds',
     type: 'website'
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Where To Take',
-    description: 'Three date options in 30 seconds'
+    title: 'Dealme3',
+    description: 'Three options in 30 seconds'
   },
   alternates: { canonical: '/' }
 }
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:bg-[hsl(var(--card))] focus:border focus:border-white/20 focus:px-3 focus:py-2 focus:rounded-md">Skip to content</a>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <ToastProvider>
             <Header />
             <main id="main" className="container-page py-8">{children}</main>
@@ -41,4 +41,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
-

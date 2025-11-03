@@ -30,11 +30,11 @@ export function ReviewList({ base, placeId }: { base: Review[]; placeId: string 
   const all = [...base, ...local].sort((a,b) => +new Date(b.createdAt) - +new Date(a.createdAt))
   const avg = all.length ? (all.reduce((s,r)=>s+r.rating,0)/all.length) : 0
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="reviews-panel">
       <div className="font-semibold">{avg.toFixed(1)}★ average from {all.length} review{all.length!==1?'s':''}</div>
       <div className="space-y-3">
         {all.map(r => (
-          <div key={r.id} className="card p-4">
+          <div key={r.id} className="card p-4" data-testid="review-card">
             <div className="flex items-center justify-between text-sm">
               <div className="font-medium">{r.title} · {r.rating}★</div>
               <div className="text-white/60">{new Date(r.createdAt).toLocaleDateString()}</div>
@@ -48,12 +48,19 @@ export function ReviewList({ base, placeId }: { base: Review[]; placeId: string 
   )
 }
 
-export function ReviewForm({ placeId, onAdd }: { placeId: string; onAdd: (r: Review) => void }) {
+export function ReviewForm({ placeId, onAdd }: { placeId: string; onAdd?: (r: Review) => void }) {
   const { notify } = useToast()
   const [rating, setRating] = React.useState(5)
   const [title, setTitle] = React.useState('')
   const [body, setBody] = React.useState('')
   const [author, setAuthor] = React.useState('')
+  const [signedIn, setSignedIn] = React.useState(false)
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const flag = localStorage.getItem('signedIn') === 'true' || !!localStorage.getItem('user')
+    setSignedIn(flag)
+  }, [])
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -63,13 +70,23 @@ export function ReviewForm({ placeId, onAdd }: { placeId: string; onAdd: (r: Rev
     const map: Record<string, Review[]> = raw ? JSON.parse(raw) : {}
     map[placeId] = [...(map[placeId] ?? []), review]
     localStorage.setItem('localReviews', JSON.stringify(map))
-    onAdd(review)
+  if (onAdd) onAdd(review)
     notify({ title: 'Thanks for sharing a review!' })
     setTitle(''); setBody(''); setAuthor('')
   }
 
+  if (!signedIn) {
+    return (
+      <div className="card p-4 space-y-3" aria-live="polite">
+        <div className="font-semibold">Log in to leave a review</div>
+        <p className="text-sm text-white/80">You can read all reviews below. To add your own, please log in.</p>
+        <a className="inline-block rounded-2xl bg-[hsl(var(--accent))] text-black px-4 py-2" href="/login">Login</a>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={submit} className="card p-4 space-y-3" aria-labelledby="review-form">
+    <form onSubmit={submit} className="card p-4 space-y-3" aria-labelledby="review-form" data-testid="review-form">
       <div className="font-semibold" id="review-form">Add a review</div>
       <label className="text-sm">Rating
         <Input type="number" min={1} max={5} value={rating} onChange={(e)=>setRating(Number(e.target.value))} aria-label="Rating 1 to 5" />
@@ -88,4 +105,3 @@ export function ReviewForm({ placeId, onAdd }: { placeId: string; onAdd: (r: Rev
     </form>
   )
 }
-
