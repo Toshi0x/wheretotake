@@ -10,6 +10,12 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry'
   },
+  webServer: {
+    command: process.platform === 'win32' ? 'npm run build && npm run start' : 'npm run build && PORT=3000 npm run start',
+    port: 3000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
   projects: [
     {
       name: 'chromium-desktop',
@@ -21,4 +27,3 @@ export default defineConfig({
     }
   ]
 })
-
