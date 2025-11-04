@@ -182,6 +182,10 @@ export interface PlanFormState {
   vegetarian?: boolean;
   vibes?: VibeKey[];
   lockStep?: 1|2|3;
+  // New optional UX fields
+  originLat?: number;
+  originLng?: number;
+  transport?: 'walk'|'public'|'drive';
 }
 
 export interface PlanStep {
@@ -260,6 +264,29 @@ export function scheduleSteps(places: PlannerV2Place[], form: PlanFormState): Pl
     if (over > 0 && over <= 3) note = `+${over}m travel buffer`
   }
   return { steps, note }
+}
+
+// Feasibility + candidates for previews
+export function feasibilityScore(form: PlanFormState): { plans: number; reasons?: string[] } {
+  const base = loadPlaces()
+  const filtered = applyConstraints(base, form)
+  // quick estimate: proportion of filtered places ^ steps
+  const ratio = filtered.length / Math.max(1, base.length)
+  const approx = Math.round(Math.max(0, ratio) * 8)
+  const reasons: string[] = []
+  if (!filtered.length) {
+    if (form.budgetMin!=null || form.budgetMax!=null) reasons.push('Tight budget')
+    if (form.area) reasons.push(`Area filter “${form.area}”`)
+    if (form.walkInOnly && form.when==='Tonight') reasons.push('Walk-in only tonight')
+    if (form.quiet) reasons.push('Quiet constraint')
+  }
+  return { plans: approx, reasons: reasons.length?reasons:undefined }
+}
+
+export function generateCandidates(form: PlanFormState, n = 3): PlanResult[] {
+  const base = applyConstraints(loadPlaces(), form)
+  const res = scheduleSteps(base, form)
+  return [res, res, res].slice(0, n)
 }
 
 export function applyConstraints(places: PlannerV2Place[], form: PlanFormState): PlannerV2Place[] {

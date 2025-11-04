@@ -3,6 +3,9 @@ import * as React from 'react'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { clamp } from '@/lib/utils'
+import { addHoursToTime } from '@/lib/time'
+import { feasibilityScore } from '@/lib/planner'
 import type { PlanFormState } from '@/lib/planner'
 
 export default function PlannerForm({ value, onChange, onGenerate, onCopy }: {
@@ -12,8 +15,46 @@ export default function PlannerForm({ value, onChange, onGenerate, onCopy }: {
   onCopy: ()=>void
 }) {
   const todayISO = new Date().toISOString().slice(0,10)
+  const [plans, setPlans] = React.useState<number|undefined>(undefined)
+  const [reasons, setReasons] = React.useState<string[]|undefined>(undefined)
+
+  React.useEffect(() => {
+    const h = setTimeout(() => {
+      const f = feasibilityScore(value)
+      setPlans(f.plans)
+      setReasons(f.reasons)
+    }, 250)
+    return () => clearTimeout(h)
+  }, [value])
+
+  function useMyLocation() {
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(pos => {
+      onChange({ originLat: pos.coords.latitude, originLng: pos.coords.longitude })
+    })
+  }
+
+  const endTime = addHoursToTime(value.startTime, value.durationHrs)
+  const estHops = clamp(Math.floor((value.durationHrs*60) / (40 + value.maxTravelMins)), 2, 4)
   return (
-    <form className="card p-5 grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="planner-form" onSubmit={(e)=>{e.preventDefault(); onGenerate()}}>
+    <form id="planner-form" className="card p-5 grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="planner-form" onSubmit={(e)=>{e.preventDefault(); onGenerate()}}>
+      <div className="md:col-span-3 flex flex-wrap items-end gap-3">
+        <label className="text-sm" htmlFor="origin">Origin
+          <Input id="origin" placeholder="Postcode or area" value={value.area ?? ''} onChange={e=>onChange({ area: e.target.value||undefined })} />
+        </label>
+        <Button type="button" variant="secondary" onClick={useMyLocation}>Use my location</Button>
+        <div className="text-sm">
+          <label htmlFor="transport">Transport</label>
+          <Select id="transport" value={value.transport ?? 'walk'} onChange={(e)=>onChange({ transport: e.target.value as any })}>
+            <option value="walk">Walk</option>
+            <option value="public">Public</option>
+            <option value="drive">Drive</option>
+          </Select>
+        </div>
+        {plans!=null && (
+          <div className="ml-auto rounded-full bg-muted px-3 py-1 text-sm">≈ {plans} plans found</div>
+        )}
+      </div>
       <label className="text-sm" htmlFor="date">Date
         <Input id="date" type="date" value={value.dateISO} min={todayISO} onChange={e=>onChange({ dateISO: e.target.value })} />
       </label>
@@ -35,6 +76,13 @@ export default function PlannerForm({ value, onChange, onGenerate, onCopy }: {
           <option>Date</option>
         </Select>
       </div>
+      <div className="md:col-span-3 grid grid-cols-2 gap-3 text-xs text-textDim">
+        <div>End time: <span className="font-medium text-text">{endTime}</span></div>
+        <div>Est. hops: <span className="font-medium text-text">{estHops}</span></div>
+      </div>
+      {reasons?.length ? (
+        <div className="md:col-span-3 text-xs text-textDim">Why 0 results: {reasons.join(' · ')}</div>
+      ) : null}
       <label className="text-sm" htmlFor="dur">Duration (hrs)
         <Input id="dur" type="number" step={0.5} min={1.5} max={4} value={value.durationHrs} onChange={e=>onChange({ durationHrs: Number(e.target.value) })} />
       </label>
@@ -91,4 +139,3 @@ function valToTime(v: number) {
   const m = v%1 ? 30 : 0
   return `${String(h).padStart(2,'0')}:${m? '30':'00'}`
 }
-

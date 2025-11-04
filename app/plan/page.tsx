@@ -3,7 +3,9 @@ import * as React from 'react'
 import Presets from '@/components/planner/Presets'
 import PlannerForm from '@/components/planner/PlannerForm'
 import PlanResults from '@/components/planner/PlanResults'
-import { loadPlaces, applyConstraints, scheduleSteps, type PlanFormState, writeFormToURL, readFormFromURL, persistForm, restoreForm } from '@/lib/planner'
+import PlanPreviewCard from '@/components/PlanPreviewCard'
+import StickyPlannerCta from '@/components/StickyPlannerCta'
+import { loadPlaces, applyConstraints, scheduleSteps, type PlanFormState, writeFormToURL, readFormFromURL, persistForm, restoreForm, generateCandidates } from '@/lib/planner'
 
 export default function PlannerPage() {
   const today = new Date()
@@ -28,6 +30,7 @@ export default function PlannerPage() {
   const [form, setForm] = React.useState<PlanFormState>({ ...initial, ...restoreForm(), ...readFormFromURL() } as PlanFormState)
   const [result, setResult] = React.useState<ReturnType<typeof scheduleSteps> | null>(null)
   const [lock1, setLock1] = React.useState(false)
+  const [previews, setPreviews] = React.useState<ReturnType<typeof generateCandidates>>([])
 
   React.useEffect(()=>{ writeFormToURL(form); persistForm(form) }, [form])
 
@@ -62,12 +65,25 @@ export default function PlannerPage() {
     setResult(res)
   }
 
+  React.useEffect(()=>{
+    const h = setTimeout(()=> setPreviews(generateCandidates(form, 3)), 250)
+    return () => clearTimeout(h)
+  }, [form])
+
   return (
     <div className="space-y-5">
       <h1 className="text-3xl font-bold">Plan a mini-itinerary</h1>
       <Presets value={form} onChange={onChange} />
       <PlannerForm value={form} onChange={onChange} onGenerate={generate} onCopy={copyPlan} />
+      {!!previews?.length && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3" aria-label="Plan previews">
+          {previews.slice(0,3).map((p,i)=> (
+            <PlanPreviewCard key={i} plan={p} onUse={generate} onShuffle={()=>setPreviews(generateCandidates(form,3))} />
+          ))}
+        </div>
+      )}
       <PlanResults result={result} onReroll2={reroll2} lock1={lock1} setLock1={setLock1} />
+      <StickyPlannerCta targetId="planner-form" onSubmit={generate} onCopy={copyPlan} />
     </div>
   )
 }
