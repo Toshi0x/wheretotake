@@ -19,6 +19,9 @@ const config: Config = {
         accent: 'var(--accent)',
         accent2: 'var(--accent-2)',
         onAccent: 'var(--on-accent)',
+        borderStrong: 'var(--border-strong)',
+        borderHover: 'var(--border-hover)',
+        placeholder: 'var(--placeholder)',
         success: 'var(--success)',
         warning: 'var(--warning)',
         danger: 'var(--danger)',
@@ -28,7 +31,7 @@ const config: Config = {
         xl: 'var(--radius)',
         '2xl': 'calc(var(--radius) + 6px)'
       },
-      boxShadow: { focus: 'var(--ring)', soft: 'var(--shadow)' },
+      boxShadow: { focus: 'var(--ring)', focusInset: 'var(--ring-inset)', soft: 'var(--shadow)' },
       ringOffsetWidth: { DEFAULT: 'var(--ring)' }
     }
   },

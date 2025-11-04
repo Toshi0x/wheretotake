@@ -20,7 +20,7 @@ export default async function PlacePage({ params }: { params: { slug: string } }
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold">{place.name}</h1>
-            <div className="text-sm text-white/60">{place.area} • {'£'.repeat(place.price_level)} • {fmtPriceRange(price)}</div>
+            <div className="text-sm text-textDim">{place.area} • {'£'.repeat(place.price_level)} • {fmtPriceRange(price)}</div>
             <div className="mt-2 flex flex-wrap gap-2">{place.vibe_tags.map(t => <Badge key={t}>{t.replace('_',' ')}</Badge>)}</div>
             <div className="mt-2">
               {place.lead_time_days === 0 && <Badge>Walk-in</Badge>}
@@ -55,4 +55,6 @@ export default async function PlacePage({ params }: { params: { slug: string } }
     </div>
   )
 }
+
+
 

@@ -74,7 +74,7 @@ function FeaturedCard({ place, large, mobile, dataIndex, total }: { place: Place
       mobile ? 'min-w-[80%] snap-start' : ''
     ].join(' ')}>
       <div role="img" aria-label={`${place.name}, ${place.area}, ${price}`}>
-        <Image src={place.photo_url || '/placeholder.svg'} alt={`${place.name} photo`} width={800} height={480} className="h-56 w-full object-cover md:h-48" />
+        <Image src={place.photo_url || '/placeholder.svg'} alt={`${place.name} photo`} width={800} height={480} sizes="(max-width: 768px) 100vw, 50vw" priority={dataIndex===0} className="h-56 w-full object-cover md:h-48" />
       </div>
       <div className="overlay-gradient absolute inset-0 pointer-events-none" />
       <div className="absolute left-3 right-3 bottom-3 flex flex-col gap-2">

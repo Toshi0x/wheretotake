@@ -8,8 +8,9 @@ import { plan, type Itinerary } from '@/lib/planner'
 import { Vibe } from '@/lib/types'
 import ItineraryCard from './itinerary-card'
 import { useToast } from './ui/toast'
-import { track } from '@/lib/utils'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { track } from '@/lib/analytics'
 
 const vibesList: { key: Vibe; label: string }[] = [
   { key: 'romantic', label: 'romantic' },
@@ -23,6 +24,9 @@ const vibesList: { key: Vibe; label: string }[] = [
 
 export default function QuickFinder() {
   const { notify } = useToast()
+  const router = useRouter()
+  const search = useSearchParams()
+  const [min, setMin] = React.useState<string>('')
   const [max, setMax] = React.useState<string>('')
   const today = new Date()
   const defaultDate = new Date(today.getTime() + 14*24*60*60*1000)
@@ -35,10 +39,38 @@ export default function QuickFinder() {
   const maxDate = new Date(today.getTime() + 60*24*60*60*1000)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
 
+  // Hydrate from URL
+  React.useEffect(() => {
+    const sp = search
+    if (!sp) return
+    setMin(sp.get('min') ?? '')
+    setMax(sp.get('max') ?? '')
+    setArea(sp.get('area') ?? '')
+    setDate(sp.get('date') ?? defaultDate.toISOString().slice(0,10))
+    setWhen((sp.get('when') as any) ?? 'tonight')
+    const v = sp.get('vibe') ?? sp.get('vibes')
+    setVibes(v ? (v.split(',') as Vibe[]) : ['low_key'])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sync to URL on change
+  React.useEffect(() => {
+    const params = new URLSearchParams()
+    if (min) params.set('min', min)
+    if (max) params.set('max', max)
+    if (area) params.set('area', area)
+    if (date) params.set('date', date)
+    if (when) params.set('when', when)
+    if (vibes?.length) params.set('vibe', vibes.join(','))
+    const qs = params.toString()
+    router.replace(qs ? `?${qs}` : '?')
+  }, [min, max, area, date, when, vibes, router])
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     const input = {
       dateISO: date,
+      budgetMin: min ? Number(min) : undefined,
       budgetMax: max ? Number(max) : undefined,
       area: area || undefined,
       vibes,
@@ -47,7 +79,7 @@ export default function QuickFinder() {
     const out = await plan(input)
     setIts(out)
     setOpen(true)
-    track('got3options')
+    track('got3options', input as any)
   }
 
   function toggle(v: Vibe) {
@@ -66,13 +98,13 @@ export default function QuickFinder() {
     <div className="card p-5" data-testid="quick-finder">
       <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-3 gap-3" aria-label="Quick finder form">
         <fieldset className="text-sm md:col-span-3">
-          <legend className="mb-2 block">Budget (£, per person)</legend>
+          <legend className="mb-2 block">Spend per person</legend>
           <div className="grid grid-cols-1 gap-3" aria-describedby="budgetHelp">
-            <label className="text-sm" htmlFor="budget">Budget
-              <Input id="budget" data-testid="budget" inputMode="numeric" value={max} onChange={e=>setMax(e.target.value)} placeholder="Any" aria-label="Budget" />
+            <label className="text-sm" htmlFor="budgetPp">Amount
+              <Input id="budgetPp" data-testid="budget-max" inputMode="numeric" value={max} onChange={e=>setMax(e.target.value)} placeholder="Any" aria-describedby="budgetHelp" />
             </label>
           </div>
-          <small id="budgetHelp" className="mt-1 block text-textDim">We'll use per-person price.</small>
+          <p id="budgetHelp" className="mt-1 text-textDim text-sm">We’ll use per-person price.</p>
         </fieldset>
         <label className="text-sm" htmlFor="date">Date
           <Input id="date" type="date" min={today.toISOString().slice(0,10)} max={maxDate.toISOString().slice(0,10)} value={date} onChange={e=>setDate(e.target.value)} aria-label="Date" />
@@ -88,10 +120,10 @@ export default function QuickFinder() {
             <option value="daytime">Daytime</option>
           </Select>
           {(when === 'tonight') && (
-            <small className="mt-1 block text-textDim">We'll favour walk-in friendly spots.</small>
+            <small className="mt-1 block text-textDim">We’ll favour walk-in friendly spots.</small>
           )}
           {when !== 'tonight' && (new Date(date) >= new Date(today.getTime() + 14*24*60*60*1000)) && (
-            <small className="mt-1 block text-textDim">Includes places requiring booking up to 2 weeks.</small>
+            <small className="mt-1 block text-textDim">Includes book-ahead places up to ~2 weeks.</small>
           )}
         </div>
         <fieldset className="text-sm md:col-span-3">

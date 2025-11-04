@@ -75,3 +75,31 @@ h1,h2,h3 { @apply tracking-tight; }
 /* Ensure glass and card use theme-aware shadow */
 .glass { box-shadow: var(--shadow); background: color-mix(in srgb, var(--card) 94%, transparent); }
 .card { box-shadow: var(--shadow); background: var(--card); border-color: var(--border); }
+
+/* Field visibility improvements: tokens + helper */
+:root {
+  /* dark-mode field tokens override */
+  --border: rgba(255,255,255,.08);
+  --border-strong: rgba(255,255,255,.16);
+  --border-hover: rgba(255,255,255,.22);
+  --placeholder: rgba(231,237,245,.55);
+  --ring-inset: inset 0 0 0 1.5px rgba(62,243,182,.55);
+}
+.light {
+  /* light mode field tokens */
+  --border: rgba(15,23,42,.10);
+  --border-strong: rgba(15,23,42,.16);
+  --border-hover: rgba(15,23,42,.24);
+  --placeholder: rgba(13,19,32,.45);
+  --ring-inset: inset 0 0 0 1.5px rgba(22,93,255,.55);
+}
+
+.field {
+  background: var(--card);
+  color: var(--text);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+}
+.field::placeholder { color: var(--placeholder); }
+.field:hover { border-color: var(--border-hover); }
+.field:focus-visible { outline: none; box-shadow: var(--ring), var(--ring-inset); border-color: transparent; }

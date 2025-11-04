@@ -7,7 +7,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type,
   return (
     <input
       type={type}
-      className={cn('flex h-11 w-full rounded-xl bg-card text-text border border-border px-3 py-2 text-sm placeholder:text-textDim focus-ring', className)}
+      className={cn(
+        'field w-full px-3 py-2 text-sm',
+        'placeholder:[color:var(--placeholder)]',
+        'hover:border-borderHover',
+        'focus-visible:[box-shadow:var(--ring),var(--ring-inset)]',
+        'transition-colors',
+        className
+      )}
       ref={ref}
       {...props}
     />
