@@ -1,227 +1,108 @@
-﻿"use client"
+"use client"
 import * as React from 'react'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import Image from 'next/image'
-import { buildSearchDocs, buildFuse, expandQueryTokens, searchDocs, type SearchDoc } from '@/lib/search'
-import { getReviewsForPlace } from '@/lib/data'
-import { ReviewList, ReviewForm } from '@/components/reviews'
-import { track } from '@/lib/utils'
+import ReviewSearchBar from '@/components/ReviewSearchBar'
+import FiltersBar from '@/components/FiltersBar'
+import PlaceReviewCard from '@/components/PlaceReviewCard'
+import SkeletonCard from '@/components/SkeletonCard'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { buildSearchDocs, buildFuse, searchDocs } from '@/lib/search'
+import { buildFacets } from '@/lib/facets'
+import ReviewsPanel from '@/components/ReviewsPanel'
+import Script from 'next/script'
+import { itemListLD } from '@/lib/seo'
 
-type SortKey = 'reviews'|'rating'|'price'|'lead'
-
-export default function ReviewsIndexPage() {
-  const router = useRouter()
+export default function ReviewsPage() {
   const sp = useSearchParams()
-  const [q, setQ] = React.useState<string>(sp.get('q') ?? '')
-  const [sort, setSort] = React.useState<SortKey>('reviews')
-  const [filters, setFilters] = React.useState({ hasReviews: false, highRating: false, quiet: false, warm: false, shortQueue: false })
-  const [docs, setDocs] = React.useState<SearchDoc[]>([])
-  const [openSlug, setOpenSlug] = React.useState<string | null>(sp.get('place'))
-  const reviewsRef = React.useRef<HTMLDivElement | null>(null)
-  const [baseReviews, setBaseReviews] = React.useState<any[]>([])
-
-  React.useEffect(() => { (async()=>{ setDocs(await buildSearchDocs()) })() }, [])
-
-  React.useEffect(() => {
-    const h = setTimeout(() => {
-      const params = new URLSearchParams(sp.toString())
-      if (q) params.set('q', q); else params.delete('q')
-      router.replace(`/reviews?${params.toString()}`)
-      track('search', { q, tokens: expandQueryTokens(q) })
-    }, 200)
-    return () => clearTimeout(h)
-  }, [q])
+  const router = useRouter()
+  const [loading, setLoading] = React.useState(true)
+  const [docs, setDocs] = React.useState<any[]>([])
+  const [fuse, setFuse] = React.useState<any>(null)
+  const [tokens, setTokens] = React.useState<string[]>([])
+  const [sort, setSort] = React.useState<'most'|'rating'|'newest'>('most')
+  const [fac, setFac] = React.useState<{ has?: boolean; rating?: boolean; quiet?: boolean; warm?: boolean; shortQueue?: boolean }>({})
+  const [page, setPage] = React.useState(1)
+  const [panelOpen, setPanelOpen] = React.useState(false)
+  const [panelPlace, setPanelPlace] = React.useState<any>(null)
 
   React.useEffect(() => {
-    setOpenSlug(sp.get('place'))
+    buildSearchDocs().then((d)=>{ setDocs(d); setFuse(buildFuse(d)); setLoading(false) })
+  }, [])
+
+  React.useEffect(() => {
+    const q = sp.get('q') ?? ''
+    setTokens(q ? q.split('+').map(decodeURIComponent) : [])
   }, [sp])
 
-  React.useEffect(() => {
-    (async () => {
-      const d = docs.find(x => x.slug === openSlug!)
-      if (d?.id) {
-        const list = await getReviewsForPlace(d.id)
-        setBaseReviews(list as any)
-      } else {
-        setBaseReviews([])
-      }
-    })()
-  }, [openSlug, docs])
+  const results = React.useMemo(() => {
+    if (!fuse) return []
+    // When no tokens, show all docs (sorted) instead of an empty Fuse search
+    let res = (tokens && tokens.length > 0)
+      ? searchDocs(fuse, tokens).map((r:any)=>r.item)
+      : (docs as any[])
+    // facets
+    res = res.filter((d:any)=>!fac.has || (d.ratingCount>0))
+    res = res.filter((d:any)=>!fac.rating || ((d.ratingAvg??0)>=4.5))
+    res = res.filter((d:any)=>!fac.quiet || d.tags?.noise)
+    res = res.filter((d:any)=>!fac.warm || d.tags?.lighting)
+    res = res.filter((d:any)=>!fac.shortQueue || (d.lead??99)<=2)
+    // sort
+    if (sort==='most') res.sort((a:any,b:any)=> (b.ratingCount??0)-(a.ratingCount??0))
+    if (sort==='rating') res.sort((a:any,b:any)=> (b.ratingAvg??0)-(a.ratingAvg??0))
+    if (sort==='newest') res.sort((a:any,b:any)=> (b.id.localeCompare(a.id)))
+    return res
+  }, [fuse, tokens, fac, sort, docs])
 
-  const tokens = expandQueryTokens(q)
-  const fuse = React.useMemo(() => buildFuse(docs), [docs])
-  let results = searchDocs(fuse, tokens).map(r => r.item)
-  if (!q) results = docs
-  results = results.filter(r => {
-    if (filters.hasReviews && r.ratingCount <= 0) return false
-    if (filters.highRating && (r.ratingAvg ?? 0) < 4.5) return false
-    if (filters.quiet && !r.tags.noise) return false
-    if (filters.warm && !r.tags.lighting) return false
-    if (filters.shortQueue && !r.tags.queue) return false
-    return true
-  })
-  results = [...results].sort((a,b)=>{
-    if (sort==='reviews') return (b.ratingCount)-(a.ratingCount)
-    if (sort==='rating') return (b.ratingAvg??0)-(a.ratingAvg??0)
-    if (sort==='price') return (a.priceMin??0)-(b.priceMin??0)
-    if (sort==='lead') return (a.lead)-(b.lead)
-    return 0
-  })
+  const facets = React.useMemo(()=> buildFacets(docs as any), [docs])
 
-  function toggleFilter(key: keyof typeof filters) { setFilters(prev => ({...prev, [key]: !prev[key]})) }
+  const shown = results.slice(0, page*12)
 
-  function highlight(text: string, toks: string[] = tokens) {
-    if (!toks.length) return text
-    const uniq = Array.from(new Set(toks.map(t=>t.toLowerCase())))
-    const esc = (s:string)=>s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const re = new RegExp(uniq.map(esc).join('|'), 'gi')
-    const parts = text.split(re)
-    const matches = text.match(re) || []
-    const out: string[] = []
-    parts.forEach((p, i) => {
-      out.push(p)
-      if (i < matches.length) out.push(`<mark>${matches[i]}</mark>`)
-    })
-    return out.join('')
-  }
-  function openPlace(slug: string) {
-    const params = new URLSearchParams(sp.toString())
-    params.set('place', slug)
-    router.replace(`/reviews?${params.toString()}`)
-  }
-  function closePlace() {
-    const params = new URLSearchParams(sp.toString())
-    params.delete('place')
-    router.replace(`/reviews?${params.toString()}`)
+  function onTokens({ tokens: t, query }: { tokens: string[]; query: string }) {
+    const qs = new URLSearchParams(sp.toString())
+    if (t.length) qs.set('q', t.join('+')); else qs.delete('q')
+    router.replace('?' + qs.toString())
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-end justify-between gap-3">
-        <div className="grow">
-          <label className="text-sm" htmlFor="search">Search</label>
-          <Input id="search" aria-label="Search" placeholder='Try: "quiet ramen soho", "walk-in romantic"' value={q} onChange={e=>setQ(e.target.value)} />
-        </div>
-        <div>
-          <label className="text-sm" htmlFor="sort">Sort</label>
-          <Select id="sort" value={sort} onChange={e=>setSort(e.target.value as SortKey)}>
-            <option value="reviews">Most reviewed</option>
-            <option value="rating">Highest rated</option>
-            <option value="price">Price</option>
-            <option value="lead">Wait time</option>
-          </Select>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {[{k:'hasReviews',label:'Has reviews'},{k:'highRating',label:'Rating 4.5+'},{k:'quiet',label:'Quiet'},{k:'warm',label:'Warm lighting'},{k:'shortQueue',label:'Short queue'}].map(c=>{
-          const pressed = filters[c.k as keyof typeof filters]
-          return (
-            <button key={c.k} type="button" aria-pressed={pressed} onClick={()=>toggleFilter(c.k as keyof typeof filters)} className={`rounded-full px-3 py-1 text-sm focus-ring ${pressed ? 'bg-accent/15 text-accent2' : 'bg-muted text-textDim'}`}>{c.label}</button>
-          )
-        })}
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">Reviews</h1>
 
-      {results.length === 0 && (
-        <div className="text-sm text-white/70">
-          No results. Try these:
-          <div className="mt-2 flex flex-wrap gap-2">
-            {['Raise price','Remove a term','Expand area'].map(t => <span key={t} className="rounded-full bg-white/10 px-3 py-1">{t}</span>)}
-          </div>
+      <ReviewSearchBar defaultQuery={(sp.get('q')??'').split('+').map(decodeURIComponent).join(' ')} onChange={onTokens} />
+      <FiltersBar facets={facets} value={{...fac, sort}} onChange={(v)=>{ const {sort: s, ...rest} = v; setSort(s ?? 'most'); setFac(rest) }} />
+
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {Array.from({length:6}).map((_,i)=>(<SkeletonCard key={i} />))}
         </div>
+      ) : (
+        <>
+          <ul role="list" className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {shown.map((d:any)=> (
+              <li key={d.id}>
+                <PlaceReviewCard
+                  place={{ id: d.id, slug: d.slug, name: d.name, area: d.area, budget_min: d.priceMin, budget_max: d.priceMax, price_level: (d as any).price_level ?? 2, lead_time_days: d.lead }}
+                  summary={{ avg: d.ratingAvg, count: d.ratingCount, tags: d.tags }}
+                  snippet={d.reviewText?.slice(0,160)}
+                  tokens={tokens}
+                  photos={[]}
+                  onOpenReviews={(id)=>{ setPanelPlace(d); setPanelOpen(true); const qs=new URLSearchParams(sp.toString()); qs.set('place', d.slug); router.replace('?'+qs.toString()) }}
+                />
+              </li>
+            ))}
+          </ul>
+          {shown.length < results.length && (
+            <div className="flex justify-center pt-2">
+              <button className="rounded-xl bg-muted text-text px-4 py-2 focus-ring" onClick={()=>setPage(p=>p+1)}>Load more</button>
+            </div>
+          )}
+        </>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {results.map(r => (
-          <div key={r.id} className="card p-4 flex flex-col gap-2" data-testid="place-card">
-            <div className="flex items-start justify-between">
-              <div>
-                <Link href={`/place/${r.slug}`} className="font-semibold hover:underline" dangerouslySetInnerHTML={{ __html: highlight(r.name) }} />
-                <div className="text-xs text-white/60">{r.area} &middot; &pound;{r.priceMin ?? '-'}-&pound;{r.priceMax ?? '-'}</div>
-              </div>
-            </div>
-            <div className="text-sm text-white/80">
-              <span className="mr-2">{'\u2605'} {r.ratingAvg?.toFixed(1) ?? '—'} {'\u2022'} {r.ratingCount} reviews</span>
-              <span className="inline-flex gap-2">
-                {r.tags.noise && <Badge>Quiet</Badge>}
-                {r.tags.lighting && <Badge>Warm lighting</Badge>}
-                {r.tags.queue && <Badge>Short queue</Badge>}
-              </span>
-            </div>
-            {r.reviewText && <p className="text-sm text-white/70 line-clamp-2" dangerouslySetInnerHTML={{ __html: highlight(r.reviewText.slice(0, 180)) }} />}
-            <div className="flex gap-2">
-              <Link href={`/place/${r.slug}#reviews`} className="rounded-2xl bg-muted px-3 py-1 text-sm">Reviews</Link>
-              <button onClick={()=>openPlace(r.slug)} className="rounded-2xl bg-accent text-bg px-3 py-1 text-sm">Detailed view</button>
-            </div>
-          </div>
-        ))}
-      </div>
-      {/* Right-rail details sheet controlled by ?place= */}
-      <Sheet open={!!openSlug} onOpenChange={(o)=>{ if(!o) closePlace() }}>
-        <SheetContent side="right" aria-label="Place details">
-          {openSlug && (() => {
-            const d = docs.find(x => x.slug === openSlug)
-            if (!d) return null
-            return (
-              <div className="space-y-3">
-                <div className="rounded-xl overflow-hidden bg-muted" style={{height:180}}>
-                  {d.photo_url ? (
-                    <Image src={d.photo_url} alt={`${d.name} photo`} width={640} height={320} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full animate-pulse" />
-                  )}
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-xl font-semibold">{d.name}</div>
-                  <div className="hidden md:flex gap-2">
-                    <Button variant="ghost" onClick={() => reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Read review</Button>
-                    <Button variant="ghost" asChild><Link href={`/place/${d.slug}#reviews`}>Read all reviews</Link></Button>
-                  </div>
-                </div>
-                <div className="text-xs text-textDim">{d.area} • £{d.priceMin ?? '—'}-{d.priceMax ?? '—'}</div>
-                <div className="text-sm">★ {d.ratingAvg?.toFixed(1) ?? '—'} • {d.ratingCount} reviews</div>
-                {d.address && (
-                  <div className="text-sm text-textDim">Address: {d.address}</div>
-                )}
-                <div className="grid grid-cols-2 gap-2 text-sm text-textDim">
-                  <div>Borough: {d.borough}</div>
-                  <div>Wait time: {d.lead} days</div>
-                </div>
-                <div className="flex flex-wrap gap-2">{d.vibes.map((v:string)=> <Badge key={v}>{v.replace('_',' ')}</Badge>)}</div>
-                {d.reviewText && <p className="text-sm text-textDim">{d.reviewText.slice(0,180)}…</p>}
-                <div className="flex gap-2 pt-2">
-                  {d.booking_url ? (
-                    <Button asChild><a href={d.booking_url} target="_blank" rel="noopener noreferrer">Book</a></Button>
-                  ) : (
-                    <Button>Save</Button>
-                  )}
-                  <Button variant="secondary" asChild>
-                    <a target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.name + ' ' + (d.area||''))}`}>Route</a>
-                  </Button>
-                  <Button variant="ghost" asChild>
-                    <Link href={`/place/${d.slug}#reviews`}>Read all reviews</Link>
-                  </Button>
-                </div>
-                <div ref={reviewsRef} className="mt-4 space-y-3">
-                  <h3 className="text-base font-semibold">Reviews</h3>
-                  <ReviewList base={baseReviews as any} placeId={d.id} />
-                  <div>
-                    <h4 className="text-sm font-medium mb-1">Add a review</h4>
-                    <ReviewForm placeId={d.id} onAdd={() => { /* list updates from local storage by hook */ }} />
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
-        </SheetContent>
-      </Sheet>
+      <ReviewsPanel open={panelOpen} onOpenChange={(o)=>{ setPanelOpen(o); if(!o){ const qs = new URLSearchParams(sp.toString()); qs.delete('place'); router.replace('?'+qs.toString()) } }} title={panelPlace ? `Reviews — ${panelPlace.name}` : 'Reviews'}>
+        {/* In a fuller implementation, render review list, helpful/report, and add-review form */}
+        <div className="text-sm text-textDim">Coming soon: full reviews panel.</div>
+      </ReviewsPanel>
+
+      <Script id="ld-reviews" type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(itemListLD(shown.map((d:any)=>({ name: d.name, url: `/place/${d.slug}` }))))}} />
     </div>
   )
 }
-
-
